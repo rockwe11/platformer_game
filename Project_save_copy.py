@@ -6,7 +6,7 @@ import math
 
 pygame.init()
 size = WIDTH, HEIGHT = 1920, 1080
-screen = pygame.display.set_mode(size)
+screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 screen.fill('white')
 
 all_sprites = pygame.sprite.Group()
@@ -53,6 +53,12 @@ def start_screen():
             elif event.type == pygame.KEYDOWN or \
                     event.type == pygame.MOUSEBUTTONDOWN:
                 return
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_BACKSPACE]:
+            terminate()  # <- быстрый выход для временной отладки приложения на кнопку Backspace
+            break
+
         pygame.display.flip()
         clock.tick(FPS)
 
@@ -72,6 +78,7 @@ class Player(pygame.sprite.Sprite):
         self.frames = {**kwargs}
         self.frames["left"] = pygame.transform.flip(self.frames["right"], True, False)
         self.frames["walking_left"] = [pygame.transform.flip(i, True, False) for i in self.frames["walking_right"]]
+        self.frames["jumping_left"] = [pygame.transform.flip(i, True, False) for i in self.frames["jumping_right"]]
         self.x = x
         self.y = y
         self.animation_timer = 0
@@ -82,7 +89,6 @@ class Player(pygame.sprite.Sprite):
         self.image = self.frames[player_direction]
         self.rect = self.image.get_rect().move(self.x, self.y)
 
-
     def update(self):
         self.rect = self.image.get_rect().move(self.x, self.y)
         if player_state == "walking":
@@ -91,12 +97,18 @@ class Player(pygame.sprite.Sprite):
                 self.animation_timer = 0
                 self.image_index = (self.image_index + 1) % len(self.frames["walking_right"])
             self.image = self.frames[f"walking_{player_direction}"][self.image_index]
-        else:
+        elif player_state == "idle":
             self.image = self.frames[player_direction]
             self.animation_timer = 0
             self.image_index = 0
 
         if self.isJump:
+            if self.jumpCount == 20:
+                self.image = self.frames[f"jumping_{player_direction}"][0]
+            elif self.jumpCount == 12:
+                self.image = self.frames[f"jumping_{player_direction}"][1]
+            elif self.jumpCount == 7:
+                self.image = self.frames[f"jumping_{player_direction}"][2]
             if self.jumpCount >= -20:
                 neg = 1
                 if self.jumpCount < 0:
@@ -106,7 +118,6 @@ class Player(pygame.sprite.Sprite):
             else:
                 self.isJump = False
                 self.jumpCount = 20
-
 
     def jump(self):
         pass
@@ -142,10 +153,14 @@ class Door(pygame.sprite.Sprite):
 floor = Floor()
 # all_sprites.add(floor)
 
-player = Player(player_x, player_y, right=load_image("char/sprite_0.png"),
-                walking_right=[load_image("char/sprite_1.png"),
-                               load_image("char/sprite_2.png"),
-                               load_image("char/sprite_4.png")])
+player = Player(player_x, player_y, right=load_image("char/sprite_00.png"),
+                walking_right=[load_image("char/sprite_01.png"),
+                               load_image("char/sprite_02.png"),
+                               load_image("char/sprite_03.png"),
+                               load_image("char/sprite_04.png")],
+                jumping_right=[load_image("char/sprite_07.png"),
+                               load_image("char/sprite_08.png"),
+                               load_image("char/sprite_09.png")])
 camera = Camera()
 running = True
 while running:
@@ -162,24 +177,30 @@ while running:
     if keys[pygame.K_a] or keys[pygame.K_LEFT]:  # влево (A или <-)
         if pygame.key.get_mods() & pygame.KMOD_LSHIFT:
             player.x -= player_f_speed
-            player_state = 'running'
+            if not player.isJump:
+                player_state = 'running'
         else:
             player.x -= player_n_speed
-            player_state = 'walking'
+            if not player.isJump:
+                player_state = 'walking'
         player_direction = "left"
     if keys[pygame.K_d] or keys[pygame.K_RIGHT]:  # вправо (D или ->)
         if pygame.key.get_mods() & pygame.KMOD_LSHIFT:
             player.x += player_f_speed
-            player_state = 'running'
+            if not player.isJump:
+                player_state = 'running'
         else:
             player.x += player_n_speed
-            player_state = 'walking'
+            if not player.isJump:
+                player_state = 'walking'
         player_direction = "right"
     ###############################################
     if keys[pygame.K_SPACE]:
         player.isJump = True
+        player_state = "jumping"
     ###############################################
-    if not (keys[pygame.K_a] or keys[pygame.K_LEFT]) and not (keys[pygame.K_d] or keys[pygame.K_RIGHT]):
+    if not (keys[pygame.K_a] or keys[pygame.K_LEFT]) and not (keys[pygame.K_d] or keys[pygame.K_RIGHT])\
+            and not player.isJump:
         player_state = "idle"
     screen.fill('white')
     all_sprites.update()

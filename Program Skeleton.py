@@ -112,10 +112,11 @@ class Door(pygame.sprite.Sprite):
 
 
 # start_screen()
-player = Player(player_x, player_y, right=load_image("char/sprite_0.png"),
-                walking_right=[load_image("char/sprite_1.png"),
-                               load_image("char/sprite_2.png"),
-                               load_image("char/sprite_4.png")])
+player = Player(player_x, player_y, right=load_image("char/sprite_00.png"),
+                walking_right=[load_image("char/sprite_01.png"),
+                               load_image("char/sprite_02.png"),
+                               load_image("char/sprite_03.png"),
+                               load_image("char/sprite_04.png")])
 camera = Camera()
 running = True
 while running:
