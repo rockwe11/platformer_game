@@ -15,8 +15,8 @@ item_group = pygame.sprite.Group()  # Новая группа для пола
 
 clock = pygame.time.Clock()
 pictures = ['']
-player_n_speed = 10
-player_f_speed = 30
+player_n_speed = 8
+player_f_speed = 13
 player_x = 100
 player_y = 500  # эти две переменные должны быть изменены при загрузке уровня
 player_direction = "right"
@@ -79,10 +79,12 @@ class Player(pygame.sprite.Sprite):
         self.frames["left"] = pygame.transform.flip(self.frames["right"], True, False)
         self.frames["walking_left"] = [pygame.transform.flip(i, True, False) for i in self.frames["walking_right"]]
         self.frames["jumping_left"] = [pygame.transform.flip(i, True, False) for i in self.frames["jumping_right"]]
+        self.frames["running_left"] = [pygame.transform.flip(i, True, False) for i in self.frames["running_right"]]
         self.x = x
         self.y = y
         self.animation_timer = 0
-        self.animation_speed = 10
+        self.walking_speed = 7
+        self.running_speed = 10
         self.image_index = 0
         self.isJump = False
         self.jumpCount = 20
@@ -93,10 +95,16 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(self.x, self.y)
         if player_state == "walking":
             self.animation_timer += 1
-            if self.animation_timer >= self.animation_speed:
+            if self.animation_timer >= self.walking_speed:
                 self.animation_timer = 0
                 self.image_index = (self.image_index + 1) % len(self.frames["walking_right"])
             self.image = self.frames[f"walking_{player_direction}"][self.image_index]
+        elif player_state == "running":
+            self.animation_timer += 1
+            if self.animation_timer >= self.running_speed:
+                self.animation_timer = 0
+                self.image_index = (self.image_index + 1) % len(self.frames["running_right"])
+            self.image = self.frames[f"running_{player_direction}"][self.image_index]
         elif player_state == "idle":
             self.image = self.frames[player_direction]
             self.animation_timer = 0
@@ -107,7 +115,7 @@ class Player(pygame.sprite.Sprite):
                 self.image = self.frames[f"jumping_{player_direction}"][0]
             elif self.jumpCount == 12:
                 self.image = self.frames[f"jumping_{player_direction}"][1]
-            elif self.jumpCount == 7:
+            elif self.jumpCount == -15:
                 self.image = self.frames[f"jumping_{player_direction}"][2]
             if self.jumpCount >= -20:
                 neg = 1
@@ -154,7 +162,10 @@ floor = Floor()
 # all_sprites.add(floor)
 
 player = Player(player_x, player_y, right=load_image("char/sprite_00.png"),
-                walking_right=[load_image("char/sprite_01.png"),
+                walking_right=[load_image("char/sprite_05.png"),
+                               load_image("char/sprite_01.png"),
+                               load_image("char/sprite_06.png")],
+                running_right=[load_image("char/sprite_01.png"),
                                load_image("char/sprite_02.png"),
                                load_image("char/sprite_03.png"),
                                load_image("char/sprite_04.png")],
@@ -182,6 +193,8 @@ while running:
         else:
             player.x -= player_n_speed
             if not player.isJump:
+                if player_state == "running":
+                    player.image_index = 0
                 player_state = 'walking'
         player_direction = "left"
     if keys[pygame.K_d] or keys[pygame.K_RIGHT]:  # вправо (D или ->)
