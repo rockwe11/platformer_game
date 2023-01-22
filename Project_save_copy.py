@@ -5,7 +5,8 @@ import random
 import math
 
 pygame.init()
-size = WIDTH, HEIGHT = 1920, 1080
+infoObject = pygame.display.Info()
+size = WIDTH, HEIGHT = infoObject.current_w, infoObject.current_h
 screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 screen.fill('white')
 font = pygame.font.Font(pygame.font.get_default_font(), 24)
@@ -21,11 +22,11 @@ pictures = ['']
 
 player_n_speed = 8
 player_f_speed = 13
+player_y_acc = 0.1
 
 player_direction = "right"
 player_state = "idle"  # "walking"
 FPS = 60
-GRAVITY = 3
 
 
 def load_image(name, colorkey=None):
@@ -44,16 +45,16 @@ def load_image(name, colorkey=None):
 
 
 player_images = {"right": load_image("char/sprite_00.png"),
-                "walking_right": [load_image("char/sprite_05.png"),
-                                  load_image("char/sprite_01.png"),
-                                  load_image("char/sprite_06.png")],
-                "running_right": [load_image("char/sprite_01.png"),
-                                  load_image("char/sprite_02.png"),
-                                  load_image("char/sprite_03.png"),
-                                  load_image("char/sprite_04.png")],
-                "jumping_right": [load_image("char/sprite_07.png"),
-                                  load_image("char/sprite_08.png"),
-                                  load_image("char/sprite_09.png")]}
+                 "walking_right": [load_image("char/sprite_05.png"),
+                                   load_image("char/sprite_01.png"),
+                                   load_image("char/sprite_06.png")],
+                 "running_right": [load_image("char/sprite_01.png"),
+                                   load_image("char/sprite_02.png"),
+                                   load_image("char/sprite_03.png"),
+                                   load_image("char/sprite_04.png")],
+                 "jumping_right": [load_image("char/sprite_07.png"),
+                                   load_image("char/sprite_08.png"),
+                                   load_image("char/sprite_09.png")]}
 
 
 def generate_level(level_name):
@@ -107,15 +108,17 @@ class Player(pygame.sprite.Sprite):
         self.image = self.frames[player_direction]
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect().move(self.x, self.y)
+        self.player_y_speed = 0
 
     def update(self):
-        self.rect = self.image.get_rect().move(self.x, self.y)
+        # self.rect = self.image.get_rect().move(self.x, self.y)
         if player_state == "walking":
             self.animation_timer += 1
             if self.animation_timer >= self.walking_speed:
                 self.animation_timer = 0
                 self.image_index = (self.image_index + 1) % len(self.frames["walking_right"])
-            self.image = self.frames[f"walking_{player_direction}"][self.image_index]
+            self.image = self.frames[f"walking_{player_direction}"][self.image_index % \
+                                                                    len(self.frames["walking_right"])]
         elif player_state == "running":
             self.animation_timer += 1
             if self.animation_timer >= self.running_speed:
@@ -134,19 +137,27 @@ class Player(pygame.sprite.Sprite):
                 self.image = self.frames[f"jumping_{player_direction}"][1]
             elif self.jumpCount == -15:
                 self.image = self.frames[f"jumping_{player_direction}"][2]
-            if self.jumpCount >= -20:
-                neg = 1
-                if self.jumpCount < 0:
-                    neg = -1
-                self.y -= self.jumpCount ** 2 * 0.1 * neg
+            if self.jumpCount > 0:
+                self.rect.y -= self.jumpCount ** 2 * 0.1
                 self.jumpCount -= 1
             else:
                 self.isJump = False
                 self.jumpCount = 20
         self.mask = pygame.mask.from_surface(self.image)
-
-    def jump(self):
-        pass
+        if not self.isJump:
+            for f in floors:
+                # print(f.rect.top - self.rect.bottom)
+                if pygame.sprite.collide_mask(self, f) and -10 <= f.rect.top - self.rect.bottom <= -2:
+                    self.player_y_speed = 0
+                    self.rect.bottom = f.rect.top
+                    self.rect.y += 2
+                    break
+            else:
+                if self.rect.y < player_y:
+                    self.player_y_speed += player_y_acc
+                    self.rect.y += self.player_y_speed
+                else:
+                    self.player_y_speed = 0
 
 
 class Coin(pygame.sprite.Sprite):
@@ -181,16 +192,32 @@ class Coin(pygame.sprite.Sprite):
 
 
 class Camera:
-    pass
+    # зададим начальный сдвиг камеры
+    def __init__(self):
+        self.dx = 0
+
+    # сдвинуть объект obj на смещение камеры
+    def apply(self, obj):
+        obj.rect.x += self.dx
+
+    # позиционировать камеру на объекте target
+    def update(self, target):
+        self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
 
 
 # попытка создать зеленый пол просто прямоугольником, но нужно именно картинкой
 class Floor(pygame.sprite.Sprite):
-    def __init__(self):
-        super().__init__()
-        self.surf = pygame.Surface((WIDTH, 20))
-        self.surf.fill((0, 255, 0))
-        self.rect = self.surf.get_rect(center=(WIDTH / 2, HEIGHT - 10))
+    image = pygame.transform.scale(load_image("floor.png"), (100, 65))
+
+    def __init__(self, x, y):
+        super().__init__(item_group, all_sprites)
+        self.image = Floor.image
+        self.rect = self.image.get_rect()
+        # вычисляем маску для эффективного сравнения
+        self.mask = pygame.mask.from_surface(self.image)
+        # располагаем горы внизу
+        self.rect.x = x
+        self.rect.y = y
 
 
 class Walls(pygame.sprite.Sprite):
@@ -207,13 +234,11 @@ class Door(pygame.sprite.Sprite):
 
 # start_screen()
 
-floor = Floor()
-
 # ======================================================================================
 # Данные при загрузке уровня
 
-player_x = 100
-player_y = 500
+player_x = 500
+player_y = 700
 
 coins_cords = [pygame.Rect(250, 550, 64, 64),
                pygame.Rect(350, 550, 64, 64),
@@ -223,7 +248,8 @@ coins_cords = [pygame.Rect(250, 550, 64, 64),
                pygame.Rect(550, 550, 64, 64),
                pygame.Rect(550, 500, 64, 64)
                ]
-
+floor_coords = [(700, 600), (1000, 400)]
+floors = [Floor(x, y) for x, y in floor_coords]
 coins_collected = 0
 
 player = Player(player_x, player_y, player_images)
@@ -231,7 +257,10 @@ coins = [Coin(c.x, c.y, load_image("coin.png"), 6, 1, c.size) for c in coins_cor
 one_coin_image = load_image("coin.png").subsurface(pygame.Rect((0, 0), (32, 32)))
 
 # ======================================================================================
+bg_image = load_image('loop.jpg')
+bg_rect = bg_image.get_rect()
 camera = Camera()
+scroll = 0
 running = True
 while running:
     for event in pygame.event.get():
@@ -246,11 +275,11 @@ while running:
     #####################################################################################
     if keys[pygame.K_a] or keys[pygame.K_LEFT]:  # влево (A или <-)
         if pygame.key.get_mods() & pygame.KMOD_LSHIFT:
-            player.x -= player_f_speed
+            player.rect.x -= player_f_speed
             if not player.isJump:
                 player_state = 'running'
         else:
-            player.x -= player_n_speed
+            player.rect.x -= player_n_speed
             if not player.isJump:
                 if player_state == "running":
                     player.image_index = 0
@@ -258,20 +287,21 @@ while running:
         player_direction = "left"
     if keys[pygame.K_d] or keys[pygame.K_RIGHT]:  # вправо (D или ->)
         if pygame.key.get_mods() & pygame.KMOD_LSHIFT:
-            player.x += player_f_speed
+            player.rect.x += player_f_speed
             if not player.isJump:
                 player_state = 'running'
         else:
-            player.x += player_n_speed
+            player.rect.x += player_n_speed
             if not player.isJump:
                 player_state = 'walking'
         player_direction = "right"
     ###############################################
-    if keys[pygame.K_SPACE]:
+    if keys[pygame.K_SPACE] and player.player_y_speed == 0:
         player.isJump = True
         player_state = "jumping"
+
     ###############################################
-    if not (keys[pygame.K_a] or keys[pygame.K_LEFT]) and not (keys[pygame.K_d] or keys[pygame.K_RIGHT])\
+    if not (keys[pygame.K_a] or keys[pygame.K_LEFT]) and not (keys[pygame.K_d] or keys[pygame.K_RIGHT]) \
             and not player.isJump:
         player_state = "idle"
 
@@ -280,8 +310,11 @@ while running:
             c.kill()
             coins.remove(c)
             coins_collected += 1
-
+    # фон
     screen.fill('white')
+    for i in range(-1, 2):
+        screen.blit(bg_image, (i * bg_image.get_width() + scroll, 0))
+        bg_rect.x = i * bg_image.get_width() + scroll
 
     # интерфейс
     screen.blit(one_coin_image, (10, 10))
@@ -289,6 +322,13 @@ while running:
     score_text_rect = score_text.get_rect()
     score_text_rect.topleft = (42, 15)
     screen.blit(score_text, score_text_rect)
+    camera.update(player)
+    scroll += camera.dx
+    if abs(scroll) > WIDTH:
+        scroll = 0
+    for sprite in all_sprites:
+        camera.apply(sprite)
+    screen.blit(bg_image, (WIDTH + scroll, 0))
 
     all_sprites.update()
     all_sprites.draw(screen)
