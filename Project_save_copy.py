@@ -22,7 +22,7 @@ pictures = ['']
 
 player_n_speed = 8
 player_f_speed = 13
-player_y_acc = 0.1
+player_y_acc = 0.4
 
 player_direction = "right"
 player_state = "idle"  # "walking"
@@ -99,6 +99,7 @@ class Player(pygame.sprite.Sprite):
         self.frames["running_left"] = [pygame.transform.flip(i, True, False) for i in self.frames["running_right"]]
         self.x = x
         self.y = y
+        self.player_on_ground = True
         self.animation_timer = 0
         self.walking_speed = 7
         self.running_speed = 10
@@ -130,34 +131,69 @@ class Player(pygame.sprite.Sprite):
             self.animation_timer = 0
             self.image_index = 0
 
-        if self.isJump:
-            if self.jumpCount == 20:
-                self.image = self.frames[f"jumping_{player_direction}"][0]
-            elif self.jumpCount == 12:
-                self.image = self.frames[f"jumping_{player_direction}"][1]
-            elif self.jumpCount == -15:
-                self.image = self.frames[f"jumping_{player_direction}"][2]
-            if self.jumpCount > 0:
-                self.rect.y -= self.jumpCount ** 2 * 0.1
-                self.jumpCount -= 1
-            else:
-                self.isJump = False
-                self.jumpCount = 20
+        # if self.isJump:
+        #     if self.jumpCount == 20:
+        #         self.image = self.frames[f"jumping_{player_direction}"][0]
+        #     elif self.jumpCount == 12:
+        #         self.image = self.frames[f"jumping_{player_direction}"][1]
+        #     elif self.jumpCount == -15:
+        #         self.image = self.frames[f"jumping_{player_direction}"][2]
+        #     if self.jumpCount > 0:
+        #         self.rect.y -= self.jumpCount ** 2 * 0.1
+        #         self.jumpCount -= 1
+        #     # else:
+        #     #     self.isJump = False
+        #     #     self.jumpCount = 20
         self.mask = pygame.mask.from_surface(self.image)
-        if not self.isJump:
-            for f in floors:
-                # print(f.rect.top - self.rect.bottom)
-                if pygame.sprite.collide_mask(self, f) and -10 <= f.rect.top - self.rect.bottom <= -2:
-                    self.player_y_speed = 0
-                    self.rect.bottom = f.rect.top
-                    self.rect.y += 2
-                    break
-            else:
-                if self.rect.y < player_y:
-                    self.player_y_speed += player_y_acc
-                    self.rect.y += self.player_y_speed
-                else:
-                    self.player_y_speed = 0
+        # if self.isJump and self.jumpCount <= 0:
+        self.player_y_speed += player_y_acc
+        new_player_y = self.rect.y + self.player_y_speed
+        y_collision = False
+        self.rect.y = new_player_y
+        for f in floors:
+            if pygame.sprite.collide_mask(self, f) and -10 <= f.rect.top - self.rect.bottom <= -2:
+                y_collision = True
+                self.player_y_speed = 0
+                if f.rect.y > new_player_y:
+                    self.rect.y = f.rect.y - self.rect.height + 2
+                    self.player_on_ground = True
+                break
+        if self.rect.y >= player.y:
+            y_collision = True
+            self.player_y_speed = 0
+        if not y_collision:
+            if start_jump_speed <= self.player_y_speed <= start_jump_speed * 0.8:
+                self.image = self.frames[f"jumping_{player_direction}"][0]
+            elif start_jump_speed * 0.8 < self.player_y_speed <= start_jump_speed * -0.2:
+                self.image = self.frames[f"jumping_{player_direction}"][1]
+            elif self.player_y_speed >= start_jump_speed * -0.2:
+                self.image = self.frames[f"jumping_{player_direction}"][2]
+            # self.image = self.frames[f"jumping_{player_direction}"][1]
+            self.rect.y = new_player_y
+        else:
+            self.rect.y -= self.player_y_speed
+
+
+            # for f in floors:
+            #     # print(f.rect.top - self.rect.bottom)
+            #     if pygame.sprite.collide_mask(self, f) and -10 <= f.rect.top - self.rect.bottom <= -2:
+            #         self.player_y_speed = 0
+            #         self.rect.bottom = f.rect.top
+            #         self.rect.y += 2
+            #         self.isJump = False
+            #         self.jumpCount = 20
+            #         print(False)
+            #         break
+            # else:
+            #     if self.rect.y < player_y:
+            #         # self.player_y_speed += player_y_acc
+            #         # self.rect.y += self.player_y_speed
+            #         self.rect.y += self.jumpCount ** 2 * 0.1
+            #         self.jumpCount -= 1
+            #     else:
+            #         self.isJump = False
+            #         self.jumpCount = 20
+            #         self.player_y_speed = 0
 
 
 class Coin(pygame.sprite.Sprite):
@@ -239,6 +275,7 @@ class Door(pygame.sprite.Sprite):
 
 player_x = 500
 player_y = 700
+start_jump_speed = -15
 
 coins_cords = [pygame.Rect(250, 550, 64, 64),
                pygame.Rect(350, 550, 64, 64),
@@ -297,7 +334,9 @@ while running:
         player_direction = "right"
     ###############################################
     if keys[pygame.K_SPACE] and player.player_y_speed == 0:
-        player.isJump = True
+        player.player_on_ground = False
+        player.player_y_speed = start_jump_speed
+        # player.isJump = True
         player_state = "jumping"
 
     ###############################################
