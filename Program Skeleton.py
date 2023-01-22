@@ -11,12 +11,17 @@ screen.fill('white')
 
 all_sprites = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
+coins_group = pygame.sprite.Group()
+
 clock = pygame.time.Clock()
 pictures = ['']
+
 player_n_speed = 10
 player_f_speed = 30
 player_x = 100
 player_y = 500  # эти две переменные должны быть изменены при загрузке уровня
+coins_cords = [pygame.Rect(150, 550, 64, 64)]  # в эту переменную при загрузке уровня помещаются все координаты монеток
+
 player_direction = "right"
 player_state = "idle"  # "walking"
 FPS = 60
@@ -91,6 +96,34 @@ class Player(pygame.sprite.Sprite):
             self.image_index = 0
 
 
+class Coin(pygame.sprite.Sprite):
+    def __init__(self, x, y, sheet, columns, rows, coin_size):
+        super().__init__(coins_group, all_sprites)
+        self.frames = []
+        self.cut_sheet(sheet, columns, rows, coin_size)
+        self.cur_frame = 0
+        self.image = self.frames[self.cur_frame]
+        self.rect = self.rect.move(x, y)
+        self.animation_timer = 0
+        self.animation_speed = 10
+
+    def cut_sheet(self, sheet, columns, rows, coin_size):
+        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
+                                sheet.get_height() // rows)
+        for j in range(rows):
+            for i in range(columns):
+                frame_location = (self.rect.w * i, self.rect.h * j)
+                self.frames.append(pygame.transform.scale(sheet.subsurface(pygame.Rect(
+                    frame_location, self.rect.size)), coin_size))
+
+    def update(self):
+        self.animation_timer += 1
+        if self.animation_timer >= self.animation_speed:
+            self.animation_timer = 0
+            self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+        self.image = self.frames[self.cur_frame]
+
+
 class Camera:
     pass
 
@@ -117,6 +150,7 @@ player = Player(player_x, player_y, right=load_image("char/sprite_00.png"),
                                load_image("char/sprite_02.png"),
                                load_image("char/sprite_03.png"),
                                load_image("char/sprite_04.png")])
+coins = [Coin(c.x, c.y, load_image("coin.png"), 6, 1, c.size) for c in coins_cords]
 camera = Camera()
 running = True
 while running:
