@@ -22,7 +22,7 @@ pictures = ['']
 
 player_n_speed = 8
 player_f_speed = 13
-player_y_acc = 0.4
+player_y_acc = 0.7
 
 player_direction = "right"
 player_state = "idle"  # "walking"
@@ -130,28 +130,13 @@ class Player(pygame.sprite.Sprite):
             self.image = self.frames[player_direction]
             self.animation_timer = 0
             self.image_index = 0
-
-        # if self.isJump:
-        #     if self.jumpCount == 20:
-        #         self.image = self.frames[f"jumping_{player_direction}"][0]
-        #     elif self.jumpCount == 12:
-        #         self.image = self.frames[f"jumping_{player_direction}"][1]
-        #     elif self.jumpCount == -15:
-        #         self.image = self.frames[f"jumping_{player_direction}"][2]
-        #     if self.jumpCount > 0:
-        #         self.rect.y -= self.jumpCount ** 2 * 0.1
-        #         self.jumpCount -= 1
-        #     # else:
-        #     #     self.isJump = False
-        #     #     self.jumpCount = 20
         self.mask = pygame.mask.from_surface(self.image)
-        # if self.isJump and self.jumpCount <= 0:
         self.player_y_speed += player_y_acc
         new_player_y = self.rect.y + self.player_y_speed
         y_collision = False
         self.rect.y = new_player_y
         for f in floors:
-            if pygame.sprite.collide_mask(self, f) and -10 <= f.rect.top - self.rect.bottom <= -2:
+            if pygame.sprite.collide_mask(self, f) and -32 <= f.rect.top - self.rect.bottom <= 0:
                 y_collision = True
                 self.player_y_speed = 0
                 if f.rect.y > new_player_y:
@@ -168,32 +153,9 @@ class Player(pygame.sprite.Sprite):
                 self.image = self.frames[f"jumping_{player_direction}"][1]
             elif self.player_y_speed >= start_jump_speed * -0.2:
                 self.image = self.frames[f"jumping_{player_direction}"][2]
-            # self.image = self.frames[f"jumping_{player_direction}"][1]
             self.rect.y = new_player_y
         else:
             self.rect.y -= self.player_y_speed
-
-
-            # for f in floors:
-            #     # print(f.rect.top - self.rect.bottom)
-            #     if pygame.sprite.collide_mask(self, f) and -10 <= f.rect.top - self.rect.bottom <= -2:
-            #         self.player_y_speed = 0
-            #         self.rect.bottom = f.rect.top
-            #         self.rect.y += 2
-            #         self.isJump = False
-            #         self.jumpCount = 20
-            #         print(False)
-            #         break
-            # else:
-            #     if self.rect.y < player_y:
-            #         # self.player_y_speed += player_y_acc
-            #         # self.rect.y += self.player_y_speed
-            #         self.rect.y += self.jumpCount ** 2 * 0.1
-            #         self.jumpCount -= 1
-            #     else:
-            #         self.isJump = False
-            #         self.jumpCount = 20
-            #         self.player_y_speed = 0
 
 
 class Coin(pygame.sprite.Sprite):
@@ -275,7 +237,7 @@ class Door(pygame.sprite.Sprite):
 
 player_x = 500
 player_y = 700
-start_jump_speed = -15
+start_jump_speed = -20
 
 coins_cords = [pygame.Rect(250, 550, 64, 64),
                pygame.Rect(350, 550, 64, 64),
@@ -313,11 +275,11 @@ while running:
     if keys[pygame.K_a] or keys[pygame.K_LEFT]:  # влево (A или <-)
         if pygame.key.get_mods() & pygame.KMOD_LSHIFT:
             player.rect.x -= player_f_speed
-            if not player.isJump:
+            if player.player_y_speed == 0:
                 player_state = 'running'
         else:
             player.rect.x -= player_n_speed
-            if not player.isJump:
+            if player.player_y_speed == 0:
                 if player_state == "running":
                     player.image_index = 0
                 player_state = 'walking'
@@ -325,11 +287,11 @@ while running:
     if keys[pygame.K_d] or keys[pygame.K_RIGHT]:  # вправо (D или ->)
         if pygame.key.get_mods() & pygame.KMOD_LSHIFT:
             player.rect.x += player_f_speed
-            if not player.isJump:
+            if player.player_y_speed == 0:
                 player_state = 'running'
         else:
             player.rect.x += player_n_speed
-            if not player.isJump:
+            if player.player_y_speed == 0:
                 player_state = 'walking'
         player_direction = "right"
     ###############################################
