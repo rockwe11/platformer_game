@@ -58,8 +58,28 @@ player_images = {"right": load_image("char/sprite_00.png"),
 
 
 def generate_level(level_name):
-    new_player, pos_x, pos_y = None, None, None
-    pass
+    start_x, start_y = 0, -8
+    global coins
+    global floors
+    global player, player_x, player_y, bg_image
+    with open(level_name) as level:
+        bg_name = level.readline().strip()
+        bg_image = load_image(bg_name)
+        data = level.readlines()
+        for row in data:
+            start_x = 0
+            start_y += 80
+            for el in row:
+                if el == "#":
+                    floors.append(Floor(start_x, start_y))
+                elif el == '0':
+                    coins.append(Coin(start_x, start_y, load_image('coin.png'), 6, 1, (64, 64)))
+                elif el == 'P':
+                    player.rect.x, player.rect.y = start_x, start_y
+                    player_x, player_y = start_x, start_y
+
+                start_x += 80
+
 
 
 def start_screen():
@@ -205,7 +225,7 @@ class Camera:
 
 # попытка создать зеленый пол просто прямоугольником, но нужно именно картинкой
 class Floor(pygame.sprite.Sprite):
-    image = pygame.transform.scale(load_image("floor.png"), (100, 65))
+    image = pygame.transform.scale(load_image("cobblestone.png"), (80, 80))
 
     def __init__(self, x, y):
         super().__init__(item_group, all_sprites)
@@ -216,10 +236,6 @@ class Floor(pygame.sprite.Sprite):
         # располагаем горы внизу
         self.rect.x = x
         self.rect.y = y
-
-
-class Walls(pygame.sprite.Sprite):
-    pass
 
 
 class Spikes(pygame.sprite.Sprite):
@@ -239,24 +255,27 @@ player_x = 500
 player_y = 700
 start_jump_speed = -20
 
-coins_cords = [pygame.Rect(250, 550, 64, 64),
-               pygame.Rect(350, 550, 64, 64),
-               pygame.Rect(350, 500, 64, 64),
-               pygame.Rect(450, 550, 64, 64),
-               pygame.Rect(450, 500, 64, 64),
-               pygame.Rect(550, 550, 64, 64),
-               pygame.Rect(550, 500, 64, 64)
-               ]
-floor_coords = [(700, 600), (1000, 400)]
-floors = [Floor(x, y) for x, y in floor_coords]
+# coins_cords = [pygame.Rect(250, 550, 64, 64),
+# pygame.Rect(350, 550, 64, 64),
+# pygame.Rect(350, 500, 64, 64),
+# pygame.Rect(450, 550, 64, 64),
+# pygame.Rect(450, 500, 64, 64),
+# pygame.Rect(550, 550, 64, 64),
+# pygame.Rect(550, 500, 64, 64)
+# ]
+# floor_coords = [(700, 600), (1000, 400)]
+# floors = [Floor(x, y) for x, y in floor_coords]
 coins_collected = 0
+floors = []
+coins = []
 
-player = Player(player_x, player_y, player_images)
-coins = [Coin(c.x, c.y, load_image("coin.png"), 6, 1, c.size) for c in coins_cords]
+player = Player(0, 0, player_images)
+# coins = [Coin(c.x, c.y, load_image("coin.png"), 6, 1, c.size) for c in coins_cords]
 one_coin_image = load_image("coin.png").subsurface(pygame.Rect((0, 0), (32, 32)))
-
+bg_image = ''
+generate_level('Animations/level1.txt')
 # ======================================================================================
-bg_image = load_image('loop.jpg')
+                               #load_image('loop.jpg')
 bg_rect = bg_image.get_rect()
 camera = Camera()
 scroll = 0
