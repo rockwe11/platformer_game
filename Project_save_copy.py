@@ -161,12 +161,18 @@ class Player(pygame.sprite.Sprite):
                         self.rect.y = f.rect.y - self.rect.height + 2
                         self.player_on_ground = True
                     break
-                if 0 <= f.rect.bottom - self.rect.top <= 32:
+                elif 0 <= f.rect.bottom - self.rect.top <= 20:
                     y_collision = True
                     self.player_y_speed = 0
                     if f.rect.bottom > self.rect.top:
                         self.rect.top += f.rect.bottom - self.rect.top
                     break
+        for f in floors:
+            if pygame.sprite.collide_rect(self, f) and f.rect.top - self.rect.bottom < -2:
+                if -33 <= f.rect.left - self.rect.right <= -14:
+                    self.rect.right = f.rect.left + 13
+                elif -33 <= self.rect.left - f.rect.right <= -14:
+                    self.rect.left = f.rect.right - 13
         if self.rect.y >= player_y:
             y_collision = True
             self.player_on_ground = True
