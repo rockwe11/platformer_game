@@ -58,13 +58,14 @@ player_images = {"right": load_image("char/sprite_00.png"),
 
 
 def generate_level(level_name):
-    start_x, start_y = 0, -8
+    start_x, start_y = 0, -80
     global coins
     global floors
-    global player, player_x, player_y, bg_image
+    global player, player_y, bg_image
     with open(level_name) as level:
         bg_name = level.readline().strip()
         bg_image = load_image(bg_name)
+        player_y = int(level.readline())
         data = level.readlines()
         for row in data:
             start_x = 0
@@ -75,8 +76,8 @@ def generate_level(level_name):
                 elif el == '0':
                     coins.append(Coin(start_x, start_y, load_image('coin.png'), 6, 1, (64, 64)))
                 elif el == 'P':
-                    player.rect.x, player.rect.y = start_x, start_y
-                    player_x, player_y = start_x, start_y
+                    player.rect.x, player.rect.y = start_x - 24, start_y - 49
+                    # player_y = start_x, start_y
 
                 start_x += 80
 
@@ -116,18 +117,15 @@ class Player(pygame.sprite.Sprite):
         self.frames["walking_left"] = [pygame.transform.flip(i, True, False) for i in self.frames["walking_right"]]
         self.frames["jumping_left"] = [pygame.transform.flip(i, True, False) for i in self.frames["jumping_right"]]
         self.frames["running_left"] = [pygame.transform.flip(i, True, False) for i in self.frames["running_right"]]
-        self.x = x
-        self.y = y
         self.player_on_ground = True
         self.animation_timer = 0
         self.walking_speed = 7
         self.running_speed = 10
         self.image_index = 0
-        self.isJump = False
         self.jumpCount = 20
         self.image = self.frames[player_direction]
         self.mask = pygame.mask.from_surface(self.image)
-        self.rect = self.image.get_rect().move(self.x, self.y)
+        self.rect = self.image.get_rect().move(x, y)
         self.player_y_speed = 0
 
     def update(self):
@@ -169,7 +167,7 @@ class Player(pygame.sprite.Sprite):
                     if f.rect.bottom > self.rect.top:
                         self.rect.top += f.rect.bottom - self.rect.top
                     break
-        if self.rect.y >= player.y:
+        if self.rect.y >= player_y:
             y_collision = True
             self.player_on_ground = True
             self.player_y_speed = 0
@@ -258,7 +256,7 @@ class Door(pygame.sprite.Sprite):
 # ======================================================================================
 # Данные при загрузке уровня
 
-player_x = 500
+# player_x = 500
 player_y = 700
 start_jump_speed = -20
 
@@ -324,12 +322,11 @@ while running:
     if keys[pygame.K_SPACE] and player.player_on_ground:
         player.player_on_ground = False
         player.player_y_speed = start_jump_speed
-        # player.isJump = True
         player_state = "jumping"
 
     ###############################################
     if not (keys[pygame.K_a] or keys[pygame.K_LEFT]) and not (keys[pygame.K_d] or keys[pygame.K_RIGHT]) \
-            and not player.isJump:
+            and player.player_on_ground:
         player_state = "idle"
 
     for c in coins:
@@ -343,12 +340,6 @@ while running:
         screen.blit(bg_image, (i * bg_image.get_width() + scroll, 0))
         bg_rect.x = i * bg_image.get_width() + scroll
 
-    # интерфейс
-    screen.blit(one_coin_image, (10, 10))
-    score_text = font.render(str(coins_collected), True, colors["BROWN"])
-    score_text_rect = score_text.get_rect()
-    score_text_rect.topleft = (42, 15)
-    screen.blit(score_text, score_text_rect)
     camera.update(player)
     scroll += camera.dx
     if abs(scroll) > WIDTH:
@@ -359,6 +350,13 @@ while running:
 
     all_sprites.update()
     all_sprites.draw(screen)
+
+    # интерфейс
+    screen.blit(one_coin_image, (10, 10))
+    score_text = font.render(str(coins_collected), True, colors["BROWN"])
+    score_text_rect = score_text.get_rect()
+    score_text_rect.topleft = (42, 15)
+    screen.blit(score_text, score_text_rect)
 
     pygame.display.flip()
     clock.tick(60)
