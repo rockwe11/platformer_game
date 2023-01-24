@@ -81,7 +81,6 @@ def generate_level(level_name):
                 start_x += 80
 
 
-
 def start_screen():
     while True:
         for event in pygame.event.get():
@@ -156,15 +155,23 @@ class Player(pygame.sprite.Sprite):
         y_collision = False
         self.rect.y = new_player_y
         for f in floors:
-            if pygame.sprite.collide_mask(self, f) and -32 <= f.rect.top - self.rect.bottom <= 0:
-                y_collision = True
-                self.player_y_speed = 0
-                if f.rect.y > new_player_y:
-                    self.rect.y = f.rect.y - self.rect.height + 2
-                    self.player_on_ground = True
-                break
+            if pygame.sprite.collide_mask(self, f):
+                if -32 <= f.rect.top - self.rect.bottom <= 0:
+                    y_collision = True
+                    self.player_y_speed = 0
+                    if f.rect.y > new_player_y:
+                        self.rect.y = f.rect.y - self.rect.height + 2
+                        self.player_on_ground = True
+                    break
+                if 0 <= f.rect.bottom - self.rect.top <= 32:
+                    y_collision = True
+                    self.player_y_speed = 0
+                    if f.rect.bottom > self.rect.top:
+                        self.rect.top += f.rect.bottom - self.rect.top
+                    break
         if self.rect.y >= player.y:
             y_collision = True
+            self.player_on_ground = True
             self.player_y_speed = 0
         if not y_collision:
             if start_jump_speed <= self.player_y_speed <= start_jump_speed * 0.8:
@@ -314,7 +321,7 @@ while running:
                 player_state = 'walking'
         player_direction = "right"
     ###############################################
-    if keys[pygame.K_SPACE] and player.player_y_speed == 0:
+    if keys[pygame.K_SPACE] and player.player_on_ground:
         player.player_on_ground = False
         player.player_y_speed = start_jump_speed
         # player.isJump = True
