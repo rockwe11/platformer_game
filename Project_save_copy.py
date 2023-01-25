@@ -61,10 +61,11 @@ def generate_level(level_name):
     start_x, start_y = 0, -80
     global coins
     global floors
-    global player, player_y, bg_image
+    global player, player_y, bg_image, door
     with open(level_name) as level:
         bg_name = level.readline().strip()
         bg_image = load_image(bg_name)
+        bg_image = pygame.transform.scale(bg_image, (WIDTH, HEIGHT))
         player_y = int(level.readline())
         data = level.readlines()
         for row in data:
@@ -77,8 +78,10 @@ def generate_level(level_name):
                     coins.append(Coin(start_x, start_y, load_image('coin.png'), 6, 1, (64, 64)))
                 elif el == 'P':
                     player.rect.x, player.rect.y = start_x - 24, start_y - 49
-                    # player_y = start_x, start_y
-
+                elif el == 'D':
+                    door = Door(start_x - 19, start_y - 70)
+                elif el == '^':
+                    spikes.append([Spikes(start_x - 23, start_y + 25), Spikes(start_x + 17, start_y + 25)])
                 start_x += 80
 
 
@@ -242,23 +245,36 @@ class Floor(pygame.sprite.Sprite):
         super().__init__(item_group, all_sprites)
         self.image = Floor.image
         self.rect = self.image.get_rect()
-        # вычисляем маску для эффективного сравнения
         self.mask = pygame.mask.from_surface(self.image)
-        # располагаем горы внизу
         self.rect.x = x
         self.rect.y = y
 
 
 class Spikes(pygame.sprite.Sprite):
-    pass
+    image = pygame.transform.scale(load_image("spike.png"), (85, 80))
+
+    def __init__(self, x, y):
+        super().__init__(item_group, all_sprites)
+        self.image = Spikes.image
+        self.rect = self.image.get_rect()
+        self.mask = pygame.mask.from_surface(self.image)
+        self.rect.x = x
+        self.rect.y = y
 
 
 class Door(pygame.sprite.Sprite):
-    pass
+    image = pygame.transform.scale(load_image("door.png"), (117, 150))
+
+    def __init__(self, x, y):
+        super().__init__(item_group, all_sprites)
+        self.image = Door.image
+        self.rect = self.image.get_rect()
+        self.mask = pygame.mask.from_surface(self.image)
+        self.rect.x = x
+        self.rect.y = y
 
 
 # start_screen()
-
 # ======================================================================================
 # Данные при загрузке уровня
 
@@ -278,15 +294,15 @@ start_jump_speed = -20
 # floors = [Floor(x, y) for x, y in floor_coords]
 coins_collected = 0
 floors = []
+spikes = []
 coins = []
-
+door = None
 player = Player(0, 0, player_images)
 # coins = [Coin(c.x, c.y, load_image("coin.png"), 6, 1, c.size) for c in coins_cords]
 one_coin_image = load_image("coin.png").subsurface(pygame.Rect((0, 0), (32, 32)))
 bg_image = ''
 generate_level('Animations/level1.txt')
 # ======================================================================================
-                               #load_image('loop.jpg')
 bg_rect = bg_image.get_rect()
 camera = Camera()
 scroll = 0
@@ -340,6 +356,12 @@ while running:
             c.kill()
             coins.remove(c)
             coins_collected += 1
+    for _ in spikes:
+        for sp in _:
+            if pygame.sprite.collide_mask(player, sp):
+                terminate()
+    if pygame.sprite.collide_mask(player, door):
+        terminate()
     # фон
     screen.fill('white')
     for i in range(-1, 2):
