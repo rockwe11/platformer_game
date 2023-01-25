@@ -67,6 +67,7 @@ def generate_level(level_name):
         bg_image = load_image(bg_name)
         bg_image = pygame.transform.scale(bg_image, (WIDTH, HEIGHT))
         player_y = int(level.readline())
+        start_y += int(level.readline())
         data = level.readlines()
         for row in data:
             start_x = 0
@@ -85,19 +86,84 @@ def generate_level(level_name):
                 start_x += 80
 
 
+class Button:
+    def __init__(self, x_center, y_center, image):
+        self.image = image
+        self.rect = self.image.get_rect()
+        self.x_center = x_center
+        self.y_center = y_center
+        self.rect.center = (x_center, y_center)
+        self.clicked = False
+
+    def draw(self):
+        action = False
+
+        pos = pygame.mouse.get_pos()
+
+        if self.rect.collidepoint(pos):
+            if pygame.mouse.get_pressed()[0] and not self.clicked:
+                self.clicked = True
+                action = True
+        if not pygame.mouse.get_pressed()[0]:
+            self.clicked = False
+
+        screen.blit(self.image, (self.rect.x, self.rect.y))
+
+        return action
+
+
 def start_screen():
+    start_screen_img = pygame.transform.scale(load_image("start_bg.png"), (WIDTH, HEIGHT))
+    start_game_button = Button(WIDTH // 2, HEIGHT // 2, load_image("start_game_btn.png"))
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-            elif event.type == pygame.KEYDOWN or \
-                    event.type == pygame.MOUSEBUTTONDOWN:
-                return
 
         keys = pygame.key.get_pressed()
         if keys[pygame.K_BACKSPACE]:
             terminate()  # <- быстрый выход для временной отладки приложения на кнопку Backspace
             break
+
+        screen.fill((0, 0, 0))
+        screen.blit(start_screen_img, (0, 0))
+        if start_game_button.draw():
+            return
+
+        pygame.display.flip()
+        clock.tick(FPS)
+
+
+def dead_inside(copy):
+    try_again_button = Button(WIDTH // 2 - 250, HEIGHT - 150, load_image("try_again_btn.png"))
+
+    red_bg = pygame.Surface(size)
+    red_bg.set_alpha(30)
+    red_bg.fill((255, 0, 0))
+
+    text_font = pygame.font.SysFont("Lucida Console", 96)
+    text = text_font.render("YOU FALLED", True, (0, 0, 0))
+    text_rect = text.get_rect()
+    text_rect.center = (WIDTH // 2, HEIGHT // 2 - 200)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_BACKSPACE]:
+            terminate()  # <- быстрый выход для временной отладки приложения на кнопку Backspace
+            break
+
+        screen.fill((0, 0, 0))
+        screen.blit(copy, (0, 0))
+        screen.blit(red_bg, (0, 0))
+        screen.blit(text, (text_rect.x, text_rect.y))
+
+        if try_again_button.draw():
+            generate_level("Animations/level1.txt")
+            return
 
         pygame.display.flip()
         clock.tick(FPS)
@@ -274,7 +340,7 @@ class Door(pygame.sprite.Sprite):
         self.rect.y = y
 
 
-# start_screen()
+start_screen()
 # ======================================================================================
 # Данные при загрузке уровня
 
@@ -359,7 +425,7 @@ while running:
     for _ in spikes:
         for sp in _:
             if pygame.sprite.collide_mask(player, sp):
-                terminate()
+                dead_inside(screen.copy())
     if pygame.sprite.collide_mask(player, door):
         terminate()
     # фон
