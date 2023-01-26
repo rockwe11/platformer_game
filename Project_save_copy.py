@@ -71,18 +71,20 @@ def generate_level(level_name):
         for row in data:
             start_x = 0
             start_y += 80
-            for el in row:
-                if el == "#":
+            for symbol in row:
+                if symbol == "#":
                     floors.append(Floor(start_x, start_y, 'cobblestone.png'))
-                elif el == 'G':
+                elif symbol == 'G':
                     floors.append(Floor(start_x, start_y, 'grass.png'))
-                elif el == '0':
+                elif symbol == 'B':
+                    floors.append(Floor(start_x, start_y, 'desert_cobblestone.png'))
+                elif symbol == '0':
                     coins.append(Coin(start_x, start_y, load_image('coin.png'), 6, 1, (64, 64)))
-                elif el == 'P':
+                elif symbol == 'P':
                     player.rect.x, player.rect.y = start_x - 24, start_y - 49
-                elif el == 'D':
+                elif symbol == 'D':
                     door = Door(start_x - 19, start_y - 70)
-                elif el == '^':
+                elif symbol == '^':
                     spikes.append([Spikes(start_x - 23, start_y + 25), Spikes(start_x + 17, start_y + 25)])
                 start_x += 80
 
@@ -180,7 +182,7 @@ def dead_inside(copy):
         screen.blit(text, (text_rect.x, text_rect.y))
 
         if try_again_button.draw():
-            generate_level("Animations/level2.txt")
+            generate_level("Animations/level3.txt")
             return
         if exit_button.draw():
             terminate()
@@ -416,7 +418,7 @@ door = None
 player = Player(0, 0, player_images)
 one_coin_image = load_image("coin.png").subsurface(pygame.Rect((0, 0), (32, 32)))
 bg_image = ''
-generate_level('Animations/level2.txt')
+generate_level('Animations/level1.txt')
 # ======================================================================================
 bg_rect = bg_image.get_rect()
 camera = Camera()
