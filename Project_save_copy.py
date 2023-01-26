@@ -73,7 +73,9 @@ def generate_level(level_name):
             start_y += 80
             for el in row:
                 if el == "#":
-                    floors.append(Floor(start_x, start_y))
+                    floors.append(Floor(start_x, start_y, 'cobblestone.png'))
+                elif el == 'G':
+                    floors.append(Floor(start_x, start_y, 'grass.png'))
                 elif el == '0':
                     coins.append(Coin(start_x, start_y, load_image('coin.png'), 6, 1, (64, 64)))
                 elif el == 'P':
@@ -178,7 +180,7 @@ def dead_inside(copy):
         screen.blit(text, (text_rect.x, text_rect.y))
 
         if try_again_button.draw():
-            generate_level("Animations/level1.txt")
+            generate_level("Animations/level2.txt")
             return
         if exit_button.draw():
             terminate()
@@ -364,11 +366,10 @@ class Camera:
 
 # попытка создать зеленый пол просто прямоугольником, но нужно именно картинкой
 class Floor(pygame.sprite.Sprite):
-    image = pygame.transform.scale(load_image("cobblestone.png"), (80, 80))
 
-    def __init__(self, x, y):
+    def __init__(self, x, y, image):
         super().__init__(item_group, all_sprites)
-        self.image = Floor.image
+        self.image = pygame.transform.scale(load_image(image), (80, 80))
         self.rect = self.image.get_rect()
         self.mask = pygame.mask.from_surface(self.image)
         self.rect.x = x
@@ -407,26 +408,15 @@ start_screen()
 player_y = 700
 start_jump_speed = -20
 
-# coins_cords = [pygame.Rect(250, 550, 64, 64),
-# pygame.Rect(350, 550, 64, 64),
-# pygame.Rect(350, 500, 64, 64),
-# pygame.Rect(450, 550, 64, 64),
-# pygame.Rect(450, 500, 64, 64),
-# pygame.Rect(550, 550, 64, 64),
-# pygame.Rect(550, 500, 64, 64)
-# ]
-# floor_coords = [(700, 600), (1000, 400)]
-# floors = [Floor(x, y) for x, y in floor_coords]
 coins_collected = 0
 floors = []
 spikes = []
 coins = []
 door = None
 player = Player(0, 0, player_images)
-# coins = [Coin(c.x, c.y, load_image("coin.png"), 6, 1, c.size) for c in coins_cords]
 one_coin_image = load_image("coin.png").subsurface(pygame.Rect((0, 0), (32, 32)))
 bg_image = ''
-generate_level('Animations/level1.txt')
+generate_level('Animations/level2.txt')
 # ======================================================================================
 bg_rect = bg_image.get_rect()
 camera = Camera()
