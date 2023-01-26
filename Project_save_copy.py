@@ -1,8 +1,6 @@
 import pygame
 import os
 import sys
-import random
-import math
 
 pygame.init()
 infoObject = pygame.display.Info()
@@ -59,6 +57,7 @@ player_images = {"right": load_image("char/sprite_00.png"),
 
 def generate_level(level_name):
     start_x, start_y = 0, -80
+    clear_level()
     global coins
     global floors
     global player, player_y, bg_image, door
@@ -84,6 +83,22 @@ def generate_level(level_name):
                 elif el == '^':
                     spikes.append([Spikes(start_x - 23, start_y + 25), Spikes(start_x + 17, start_y + 25)])
                 start_x += 80
+
+
+def clear_level():
+    global coins, coins_collected
+    global floors, spikes, floors
+    global player, player_y, bg_image, door
+    bg_image = None
+    for c in coins_group:
+        c.kill()
+    for i in item_group:
+        i.kill()
+    coins_collected = 0
+    coins = []
+    spikes = []
+    floors = []
+    door = None
 
 
 class Button:
@@ -137,12 +152,13 @@ def start_screen():
 
 def dead_inside(copy):
     try_again_button = Button(WIDTH // 2 - 250, HEIGHT - 150, load_image("try_again_btn.png"))
+    exit_button = Button(WIDTH // 2 + 250, HEIGHT - 150, load_image("try_again_btn.png"))
 
     red_bg = pygame.Surface(size)
     red_bg.set_alpha(30)
     red_bg.fill((255, 0, 0))
 
-    text_font = pygame.font.SysFont("Lucida Console", 96)
+    text_font = pygame.font.Font("Animations/joystix monospace.ttf", 96)
     text = text_font.render("YOU FALLED", True, (0, 0, 0))
     text_rect = text.get_rect()
     text_rect.center = (WIDTH // 2, HEIGHT // 2 - 200)
@@ -164,6 +180,49 @@ def dead_inside(copy):
         if try_again_button.draw():
             generate_level("Animations/level1.txt")
             return
+        if exit_button.draw():
+            terminate()
+
+        pygame.display.flip()
+        clock.tick(FPS)
+
+
+def end_screen(copy):
+    end_screen_img = pygame.transform.scale(load_image("count.png"), (WIDTH // 1.6, HEIGHT // 1.928))
+    end_screen_img_rect = end_screen_img.get_rect()
+    end_screen_img_rect.center = (WIDTH // 2, HEIGHT // 2)
+
+    # next_level_button = Button(WIDTH // 2, HEIGHT // 1.928 - 100, None)
+
+    text_font = pygame.font.Font("Animations/joystix monospace.ttf", 96)
+
+    text = text_font.render("SCORE", True, (0, 0, 0))
+    text_rect = text.get_rect()
+    text_rect.center = (WIDTH // 2, HEIGHT // 1.928 - 220)
+
+    score = text_font.render(str(coins_collected * 100), True, (0, 0, 0))
+    score_rect = score.get_rect()
+    score_rect.center = (WIDTH // 2, HEIGHT // 1.928 - 130)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_BACKSPACE]:
+            terminate()  # <- быстрый выход для временной отладки приложения на кнопку Backspace
+            break
+
+        screen.fill((0, 0, 0))
+        screen.blit(copy, (0, 0))
+
+        screen.blit(end_screen_img, end_screen_img_rect.topleft)
+        screen.blit(text, (text_rect.x, text_rect.y))
+        screen.blit(score, (score_rect.x, score_rect.y))
+
+        # if next_level_button.draw():
+        #     generate_level("Animations/level1.txt")
+        #     return
 
         pygame.display.flip()
         clock.tick(FPS)
@@ -427,7 +486,7 @@ while running:
             if pygame.sprite.collide_mask(player, sp):
                 dead_inside(screen.copy())
     if pygame.sprite.collide_mask(player, door):
-        terminate()
+        end_screen(screen.copy())
     # фон
     screen.fill('white')
     for i in range(-1, 2):
