@@ -156,7 +156,7 @@ def start_screen():
 
 def dead_inside(copy):
     try_again_button = Button(WIDTH // 2 - 250, HEIGHT - 150, load_image("try_again_btn.png"))
-    exit_button = Button(WIDTH // 2 + 250, HEIGHT - 150, load_image("try_again_btn.png"))
+    exit_button = Button(WIDTH // 2 + 250, HEIGHT - 150, load_image("exit_btn.png"))
 
     red_bg = pygame.Surface(size)
     red_bg.set_alpha(30)
@@ -182,7 +182,7 @@ def dead_inside(copy):
         screen.blit(text, (text_rect.x, text_rect.y))
 
         if try_again_button.draw():
-            generate_level("Animations/level3.txt")
+            generate_level(f"Animations/level{current_level}.txt")
             return
         if exit_button.draw():
             terminate()
@@ -196,8 +196,10 @@ def end_screen(copy):
     end_screen_img_rect = end_screen_img.get_rect()
     end_screen_img_rect.center = (WIDTH // 2, HEIGHT // 2)
 
-    # next_level_button = Button(WIDTH // 2, HEIGHT // 1.928 - 100, None)
-
+    next_level_button = Button(WIDTH // 2 - 250, HEIGHT // 1.928 - 100, load_image('next_level_btn.png'))
+    exit_button = Button(WIDTH // 2 + 250, HEIGHT // 1.928 - 100, load_image('exit_green_btn.png'))
+    if current_level == count_level:
+        exit_button.x_center = WIDTH // 2
     text_font = pygame.font.Font("Animations/joystix monospace.ttf", 96)
 
     text = text_font.render("SCORE", True, (0, 0, 0))
@@ -224,16 +226,25 @@ def end_screen(copy):
         screen.blit(text, (text_rect.x, text_rect.y))
         screen.blit(score, (score_rect.x, score_rect.y))
 
-        # if next_level_button.draw():
-        #     generate_level("Animations/level1.txt")
-        #     return
-
+        if current_level < count_level and next_level_button.draw():
+            next_level()
+            return
+        if exit_button.draw():
+            terminate()
         pygame.display.flip()
         clock.tick(FPS)
 
 
-def show_winners_table():
-    pass
+current_level = 1
+count_level = 3
+
+
+def next_level():
+    global current_level
+    current_level += 1
+    if current_level == 4:
+        terminate()
+    generate_level(f"Animations/level{current_level}.txt")
 
 
 def terminate():
