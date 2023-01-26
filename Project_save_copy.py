@@ -196,8 +196,8 @@ def end_screen(copy):
     end_screen_img_rect = end_screen_img.get_rect()
     end_screen_img_rect.center = (WIDTH // 2, HEIGHT // 2)
 
-    next_level_button = Button(WIDTH // 2 - 250, HEIGHT // 1.928 - 20, load_image('next_level_btn.png'))
-    exit_button = Button(WIDTH // 2 + 250, HEIGHT // 1.928 - 20, load_image('exit_green_btn.png'))
+    next_level_button = Button(WIDTH // 2 - 250, HEIGHT // 1.928 + 90, load_image('next_level_btn.png'))
+    exit_button = Button(WIDTH // 2 + 250, HEIGHT // 1.928 + 90, load_image('exit_green_btn.png'))
     if current_level == count_level:
         exit_button.rect.center = (WIDTH // 2, exit_button.y_center)
     text_font = pygame.font.Font("Animations/joystix monospace.ttf", 96)
